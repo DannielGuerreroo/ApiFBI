@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FBI Most Wanted</title>
+    <link rel="stylesheet" href="fbi.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/logo.png" type="image/png">
+    <meta name="theme-color" content="#002868">
+    <!-- OneSignal scripts aquí -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "42b0fd81-a018-4dcf-aeca-0c6486e82524",
+        });
+      });
+    </script>
+</head>
+<body>
+    <button id="btn-instalar" style="display:none;position:fixed;bottom:20px;right:20px;z-index:1000;">Instalar App</button>
+    <main id="app">
+        <!-- Menú de navegación -->
+        <aside class="c-nav">
+            <button class="c-nav-item" onclick="General()"> Lista</button>
+            <button class="c-nav-item" onclick="mostrarusuario()"> Usuario</button>
+            <button class="c-nav-item" onclick="mostrarAleatorios()">Aleatorios </button>
+            <button class="c-nav-item" onclick="mostrarFavoritos()"> Favoritos</button>
+        </aside>
+        <!-- Contenido dinámico -->
+        <section id="contenido-dinamico"></section>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="aleatorio.js"></script>
+    <script src="api.js"></script>
+    <script src="detalle.js"></script>
+    <script src="favoritos.js"></script>
+    <script src="lista.js"></script>
+    <script src="usuario.js"></script>
+    <script>
+        // Ejecuta la función General al cargar la página
+        document.addEventListener("DOMContentLoaded", () => {
+            General();
+
+            // Registro del Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js')
+                    .then(() => console.log('Service Worker registrado ✅'))
+                    .catch(error => console.log('Error al registrar SW:', error));
+            }
+
+            let deferredPrompt = null;
+            const btnInstalar = document.getElementById("btn-instalar");
+
+            // Manejo del evento para mostrar el botón de instalación
+            window.addEventListener("beforeinstallprompt", (e) => {
+                console.log("Evento beforeinstallprompt disparado");
+                e.preventDefault();
+                deferredPrompt = e;
+                if (btnInstalar) btnInstalar.style.display = "block";
+            });
+
+            // Evento click para el botón de instalación
+            if (btnInstalar) {
+                btnInstalar.addEventListener("click", async () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        const { outcome } = await deferredPrompt.userChoice;
+                        console.log("Resultado de instalación:", outcome);
+                        deferredPrompt = null;
+                        btnInstalar.style.display = "none";
+                    }
+                });
+            }
+
+            // Detección y mensaje para usuarios iOS
+            function esIOS() {
+                return /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+            }
+
+            if (esIOS()) {
+                const mensaje = document.createElement("div");
+                mensaje.className = "mensaje-ios";
+                mensaje.innerHTML = `
+                    <p>En iOS, toca <span style="font-weight:bold;">Compartir</span> y luego "Agregar a pantalla de inicio" para instalar.</p>
+                `;
+                if (btnInstalar) btnInstalar.replaceWith(mensaje);
+            }
+        });
+    </script>
+</body>
+</html>
+
